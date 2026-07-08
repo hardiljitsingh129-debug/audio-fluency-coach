@@ -4,41 +4,57 @@ type Events = {
   prolongations: [number, number][]; 
 };
 
-export default function Timeline({ events, duration }: { events: Events; duration: number }) {
+interface TimelineProps {
+  events: Events;
+  duration: number;
+  xRange?: [number, number];
+}
+
+export default function Timeline({ events, duration, xRange }: TimelineProps) {
   const width = 900;
   const height = 40;
   
-  const scale = (t: number) => (duration > 0 ? (t / duration) * width : 0);
+  const [xMin, xMax] = xRange ?? [0, duration];
+  const span =- Math.max(1e-6, xMax - xMin); //Not zero to avoid division by zero
 
-  const Bar = ({ s, e, color }: { s: number; e: number; color: string }) => (
-    <rect 
-      x={scale(s)} 
-      y={5} 
-      width={Math.max(2, scale(e) - scale(s))} 
-      height={30} 
-      fill={color} 
-      opacity={0.8} 
-    />
-  );
+  const scale = (t: number) => ((t - xMin) / span) * width;
+  const clip = (s: number, e: number) => [Math.max(s, xMin), Math.min(e, xMax)] as [number, number];
+
+  const visible = <T extends [number, number]>(arr: T[]) => 
+    arr.filter(([s, e]) => e > xMin && s < xMax);
+
+  const Bar = ({ s, e, color }: { s: number; e: number; color: string }) => {
+    const [cs, ce] = clip(s, e);
+    const w = Math.max(2, scale(ce) - scale(cs));
+    return (
+      <rect 
+        x={scale(cs)} 
+        y={5} 
+        width={w} 
+        height={30} 
+        fill={color} 
+        opacity={0.8} 
+      />
+    );
+  };
 
   return (
-    <div>
-      <svg width="100%" viewBox={`0 0 ${width} ${height}`} style={{ background: "#f7f7f7", border: "1px solid #ddd", borderRadius: 4 }}>
-        {events.blocks.map(([s, e], i) => (
+    <div style={{ width: "100%", overflow: "hidden", margin: "12px 0" }}>
+      <svg 
+        width="100%" 
+        viewBox={`0 0 ${width} ${height}`} 
+        style={{ background: "#f7f7f7", border: "1px solid #ddd", borderRadius: 4 }}
+      >
+        {visible(events.blocks).map(([s, e], i) => (
           <Bar key={`b-${i}`} s={s} e={e} color="#e34a33" />
         ))}
-        {events.repetitions.map(([s, e], i) => (
+        {visible(events.repetitions).map(([s, e], i) => (
           <Bar key={`r-${i}`} s={s} e={e} color="#fecc5c" />
         ))}
-        {events.prolongations.map(([s, e], i) => (
+        {visible(events.prolongations).map(([s, e], i) => (
           <Bar key={`p-${i}`} s={s} e={e} color="#2b8cbe" />
         ))}
       </svg>
-      <div style={{ display: "flex", gap: "16px", marginTop: "8px", fontSize: "12px" }}>
-        <span><span style={{ color: "#e34a33" }}>■</span> Blocks</span>
-        <span><span style={{ color: "#fecc5c" }}>■</span> Repetitions</span>
-        <span><span style={{ color: "#2b8cbe" }}>■</span> Prolongations</span>
-      </div>
     </div>
   );
 }

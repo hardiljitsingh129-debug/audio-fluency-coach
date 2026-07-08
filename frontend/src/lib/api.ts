@@ -1,4 +1,6 @@
-import axios from "axios";
+import axios, { type AxiosError } from "axios";
+
+export type ApiError = AxiosError<{ detail?: string }>;
 
 export type AnalyzeResponse = {
   api_version: string;
@@ -16,7 +18,7 @@ export type AnalyzeResponse = {
   targets: { articulation_rate: [number, number]; mode: string };
   tips: { title: string; detail: string }[];
 
-  thresholds: {
+  thresholds? : {
     sim_thresh: number;
     refractory_s: number;
     flux_thresh: number;
@@ -27,11 +29,12 @@ export type AnalyzeResponse = {
 
 const API = import.meta.env.VITE_API_URL as string;
 
-export async function analyzeFile(file: File): Promise<AnalyzeResponse> {
+export async function analyzeFile(file: File, mode: string): Promise<AnalyzeResponse> {
   const form = new FormData();
   form.append("file", file);
 
-  const { data } = await axios.post(`${API}/analyze? mode=${encodeURIComponent("assessment")}`, form, {
+  // string backticks configured properly
+  const { data } = await axios.post(`${API}/analyze?mode=${encodeURIComponent(mode)}`, form, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return data as AnalyzeResponse;
