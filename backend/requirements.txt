@@ -1,0 +1,12 @@
+numpy
+scipy
+librosa
+soundfile
+webrtcvad
+praat-parselmouth
+matplotlib
+pytest
+fastapi
+uvicorn
+pydantic
+pandas
