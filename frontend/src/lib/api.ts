@@ -2,6 +2,12 @@ import axios, { type AxiosError } from "axios";
 
 export type ApiError = AxiosError<{ detail?: string }>;
 
+export type EventSpan = {
+  start: number;
+  end: number;
+  confidence: number;
+}
+
 export type AnalyzeResponse = {
   api_version: string;
   file: string;
@@ -10,9 +16,12 @@ export type AnalyzeResponse = {
   quality: Record<string, number>;
   features: Record<string, number>;
   events: { 
-    blocks: [number, number][]; 
-    repetitions: [number, number][]; 
-    prolongations: [number, number][]; 
+    //blocks: [number, number][]; 
+    //repetitions: [number, number][]; 
+    //prolongations: [number, number][]; 
+    blocks: { start: number; end: number; confidence: number }[];
+    repetitions: { start: number; end: number; confidence: number }[];
+    prolongations: { start: number; end: number; confidence: number }[];
   };
   event_rates: Record<string, number>;
   targets: { articulation_rate: [number, number]; mode: string };

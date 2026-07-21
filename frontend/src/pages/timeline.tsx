@@ -33,7 +33,7 @@ export default function Timeline({ events, duration, xRange }: TimelineProps) {
         width={w} 
         height={30} 
         fill={color} 
-        opacity={0.8} 
+        opacity={0.3+0.8* confidence} 
       />
     );
   };

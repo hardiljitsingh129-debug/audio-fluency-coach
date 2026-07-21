@@ -1,11 +1,13 @@
-type Span = [number, number];
+// Timeline_1.tsx
+type Span = { start: number; end: number; confidence: number };
+
 type Events = {
   blocks: Span[];
   repetitions: Span[];
   prolongations: Span[];
 };
 
-export default function Timeline_1({
+export default function Timeline({
   events,
   duration,
   xRange,
@@ -23,14 +25,20 @@ export default function Timeline_1({
 
   const scale = (t: number) => ((t - xmin) / span) * width;
 
-  const visible = (arr: Span[]) => arr.filter(([s, e]) => e > xmin && s < xmax);
-  const clip = (s: number, e: number): Span => [Math.max(s, xmin), Math.min(e, xmax)];
+  const visible = (arr: Span[]) =>
+    arr.filter((ev) => ev.end > xmin && ev.start < xmax);
 
-  const Bar = ({ s, e, color }: { s: number; e: number; color: string }) => {
-    const [cs, ce] = clip(s, e);
+  const clipRange = (s: number, e: number): [number, number] => [
+    Math.max(s, xmin),
+    Math.min(e, xmax),
+  ];
+
+  const Bar = ({ ev, color }: { ev: Span; color: string }) => {
+    const [cs, ce] = clipRange(ev.start, ev.end);
     const x = scale(cs);
     const w = Math.max(2, scale(ce) - scale(cs)); // keep thin ticks visible
-    return <rect x={x} y={5} width={w} height={30} fill={color} opacity={0.75} rx={2} />;
+    const opacity = 0.25 + 0.65 * Math.max(0, Math.min(1, ev.confidence ?? 1));
+    return <rect x={x} y={5} width={w} height={30} fill={color} opacity={opacity} rx={2} />;
   };
 
   return (
@@ -42,16 +50,16 @@ export default function Timeline_1({
       style={{ background: "#f7f7f7", border: "1px solid #ddd", borderRadius: 4 }}
     >
       {/* Blocks (red) */}
-      {visible(events.blocks).map(([s, e], i) => (
-        <Bar key={`b${i}`} s={s} e={e} color="#e34a33" />
+      {visible(events.blocks).map((ev, i) => (
+        <Bar key={`b${i}`} ev={ev} color="#e34a33" />
       ))}
       {/* Repetitions (yellow) */}
-      {visible(events.repetitions).map(([s, e], i) => (
-        <Bar key={`r${i}`} s={s} e={e} color="#fecc5c" />
+      {visible(events.repetitions).map((ev, i) => (
+        <Bar key={`r${i}`} ev={ev} color="#fecc5c" />
       ))}
       {/* Prolongations (blue) */}
-      {visible(events.prolongations).map(([s, e], i) => (
-        <Bar key={`p${i}`} s={s} e={e} color="#2b8cbe" />
+      {visible(events.prolongations).map((ev, i) => (
+        <Bar key={`p${i}`} ev={ev} color="#2b8cbe" />
       ))}
 
       {/* Baseline */}
